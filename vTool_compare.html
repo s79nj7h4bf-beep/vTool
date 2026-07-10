@@ -140,9 +140,13 @@
         .loan-group-header.b {
             background-color: #319795 !important;
         }
-        .profit-up { color: #e53e3e; font-weight: 600; }
-        .profit-down { color: #38a169; font-weight: 600; }
+        /* 還原：與 v2 規格一致的關鍵指標著色 */
+        .interest-cost { color: #b7791f; font-weight: 600; background-color: #fffaf0; }
+        .outflow-cost { color: #9b2c2c; font-weight: 600; background-color: #fff5f5; }
+        .profit-up { color: #e53e3e; font-weight: 600; background-color: #ebf8ff; }
+        .profit-down { color: #38a169; font-weight: 600; background-color: #ebf8ff; }
         .cagr-text { font-weight: bold; color: #2b6cb0; }
+        
         .btn-export {
             display: block;
             width: 100%;
@@ -171,6 +175,11 @@
         }
         .def-item {
             margin-bottom: 15px;
+        }
+        .def-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 3px;
         }
         .def-desc {
             font-size: 13px;
@@ -240,9 +249,9 @@
                         <tr>
                             <th>未來單價</th>
                             <th>推算總價</th>
-                            <th>利息成本</th>
-                            <th>付出總額</th>
-                            <th>實質淨獲利</th>
+                            <th style="color: #b7791f;">利息成本</th>
+                            <th style="color: #9b2c2c;">付出總額</th>
+                            <th style="color: #2b6cb0;">實質淨獲利</th>
                             <th>CAGR</th>
                         </tr>
                     </thead>
@@ -306,9 +315,9 @@
                         <tr>
                             <th>未來單價</th>
                             <th>推算總價</th>
-                            <th>利息成本</th>
-                            <th>付出總額</th>
-                            <th>實質淨獲利</th>
+                            <th style="color: #b7791f;">利息成本</th>
+                            <th style="color: #9b2c2c;">付出總額</th>
+                            <th style="color: #2b6cb0;">實質淨獲利</th>
                             <th>CAGR</th>
                         </tr>
                     </thead>
@@ -321,10 +330,19 @@
     <button class="btn-export" onclick="exportToCSV()">匯出對照試算表 (CSV)</button>
 
     <div class="definition-box">
-        <div style="font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">💡 財務指標簡要說明</div>
-        <div class="def-item"><div class="def-desc"><b>• 累積繳納利息總成本：</b> 持有期內付給銀行的純利息開銷損耗（不含會退回的本金）。</div></div>
-        <div class="def-item"><div class="def-desc"><b>• 持有期內付出總額：</b> 期初總現金投入 + 持有期內累計繳給銀行的房貸總本利和，用於測試資金鏈壓力。</div></div>
-        <div class="def-item"><div class="def-desc"><b>• 實質淨獲利（總額）：</b> 最終賣出實拿總價結算，並扣除買賣雙邊仲介費、雜費、累積利息與房地合一稅後，真正落入口袋的純利潤。</div></div>
+        <div style="font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">💡 核心財務指標定義說明</div>
+        <div class="def-item">
+            <div class="def-title" style="color: #b7791f;">• 累積繳納利息總成本 (純開銷損耗)</div>
+            <div class="def-desc">持有期內付給銀行的純利息開銷總和（不含會退回的本金）。</div>
+        </div>
+        <div class="def-item">
+            <div class="def-title" style="color: #9b2c2c;">• 持有期內付出總額 (壓力測試 / 口袋深度)</div>
+            <div class="def-desc">期初總現金投入 + 持有期內累計繳給銀行的房貸總本利和，用於測試資金鏈流動性壓力。</div>
+        </div>
+        <div class="def-item">
+            <div class="def-title" style="color: #2b6cb0;">• 實質淨獲利（總額） (最終實拿戰果)</div>
+            <div class="def-desc">最終賣出實拿總價結算，並扣除買賣雙邊仲介費、雜費、累積利息與房地合一稅後，真正落入口袋的純利潤。</div>
+        </div>
     </div>
 </div>
 
@@ -420,8 +438,8 @@ function processHouseCalculations(suffix, storeObj) {
             row.innerHTML = `
                 <td><strong>${targetPricePerPing}</strong> 萬</td>
                 <td>${Math.round(estimatedTotalPriceMax)} 萬</td>
-                <td>${(totalInterestExpense / 10000).toFixed(1)} 萬</td>
-                <td>${(totalOutflow / 10000).toFixed(1)} 萬</td>
+                <td class="interest-cost">${(totalInterestExpense / 10000).toFixed(1)} 萬</td>
+                <td class="outflow-cost">${(totalOutflow / 10000).toFixed(1)} 萬</td>
                 <td class="${netProfit >= 0 ? 'profit-up' : 'profit-down'}">${(netProfit / 10000).toFixed(1)} 萬</td>
                 <td class="cagr-text">${cagr === -100 ? '虧損' : cagr.toFixed(1) + '%'}</td>
             `;
