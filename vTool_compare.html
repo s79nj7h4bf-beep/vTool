@@ -20,7 +20,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             padding: 30px;
             width: 100%;
-            max-width: 1400px; /* 擴大最大寬度以容納雙表並列 */
+            max-width: 1400px;
         }
         h2 {
             margin-top: 0;
@@ -194,11 +194,11 @@
                 </div>
                 <div class="input-group">
                     <label for="pingCount_A">房屋坪數 (坪)</label>
-                    <input type="number" id="pingCount_A" value="16.9" step="0.1" oninput="calculateAll()">
+                    <input type="number" id="pingCount_A" value="16.9" step="0.01" oninput="calculateAll()">
                 </div>
                 <div class="input-group">
                     <label for="interestRate_A">房貸利率 (%)</label>
-                    <input type="number" id="interestRate_A" value="2.6" step="0.1" oninput="calculateAll()">
+                    <input type="number" id="interestRate_A" value="2.6" step="0.01" oninput="calculateAll()">
                 </div>
                 <div class="input-group">
                     <label for="graceYears_A">寬限期 (年)</label>
@@ -254,15 +254,15 @@
             <div class="input-grid">
                 <div class="input-group">
                     <label for="totalPrice_B">房屋總價 (萬元)</label>
-                    <input type="number" id="totalPrice_B" value="1800" oninput="calculateAll()">
+                    <input type="number" id="totalPrice_B" value="1988" oninput="calculateAll()">
                 </div>
                 <div class="input-group">
                     <label for="pingCount_B">房屋坪數 (坪)</label>
-                    <input type="number" id="pingCount_B" value="12.5" step="0.1" oninput="calculateAll()">
+                    <input type="number" id="pingCount_B" value="19.41" step="0.01" oninput="calculateAll()">
                 </div>
                 <div class="input-group">
                     <label for="interestRate_B">房貸利率 (%)</label>
-                    <input type="number" id="interestRate_B" value="2.65" step="0.1" oninput="calculateAll()">
+                    <input type="number" id="interestRate_B" value="2.6" step="0.01" oninput="calculateAll()">
                 </div>
                 <div class="input-group">
                     <label for="graceYears_B">寬限期 (年)</label>
@@ -286,7 +286,7 @@
                 </div>
                 <div class="input-group full-width">
                     <label for="customPrices_B">自訂未來出售單價 (萬/坪)</label>
-                    <input type="text" id="customPrices_B" class="custom-input" value="160, 170" oninput="calculateAll()">
+                    <input type="text" id="customPrices_B" class="custom-input" value="95, 100, 105, 110" oninput="calculateAll()">
                 </div>
             </div>
             
@@ -360,7 +360,6 @@ function processHouseCalculations(suffix, storeObj) {
     
     let taxRate = holdingYears >= 5 ? 0.20 : (holdingYears > 2 ? 0.35 : 0.45);
 
-    // 儲存狀態供 CSV 匯出
     storeObj.inputs = { totalPriceMax, pingCount, interestRate, graceYears, monthlyRent, holdingYears, buyPricePerPing, buyExpenses, totalRentIncome, taxRate };
     storeObj.groups = [];
 
@@ -447,7 +446,8 @@ function buildCsvSection(label, data) {
     csv += `房貸利率,${d.interestRate},%\r\n`;
     csv += `寬限期設定,${d.graceYears},年\r\n`;
     csv += `預期月租金,${d.monthlyRent},元\r\n`;
-    csvContent = `預計持有年期,${d.holdingYears},年 (房地合一稅率: ${d.taxRate*100}%)\r\n`;
+    csv += `預計持有年期,${d.holdingYears},年\r\n`;
+    csv += `房地合一稅率,${d.taxRate*100},%\r\n`;
     csv += `期間累積租金總收入,${(d.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
     csv += `買入期初費用(2%),${(d.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
     
