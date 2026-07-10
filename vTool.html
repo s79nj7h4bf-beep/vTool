@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>房屋投資報酬率計算機 (精裝彩繪匯出版)</title>
+    <title>房屋投資報酬率計算機</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -164,31 +164,25 @@
             color: #4a5568;
             line-height: 1.5;
         }
-        /* 升級：具現代感的高質感匯出按鈕 */
+        /* 改良：極簡、扁平化的高質感灰藍色按鈕 */
         .btn-export {
             display: block;
             width: 100%;
-            background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+            background-color: #4a5568;
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
             margin-top: 25px;
-            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-            transition: all 0.2s ease;
+            transition: background-color 0.15s ease;
             text-align: center;
+            letter-spacing: 0.5px;
         }
         .btn-export:hover {
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
-        }
-        .btn-export:active {
-            transform: translateY(1px);
-            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+            background-color: #2d3748;
         }
     </style>
 </head>
@@ -242,7 +236,7 @@
             <span id="buyExpenses" style="color:#e53e3e;">-- 萬元</span>
         </div>
         <div style="font-size: 12px; color:#718096; margin-top: 5px; border-top: 1px dotted #cbd5e0; padding-top: 5px;">
-            * 由於成數改為多組對比，詳細的自備款、月還款與累積利息已整合至下方表格中分組呈現。
+            * 詳細的分組自備款、月還款與累積利息已整合至下方表格中。
         </div>
     </div>
 
@@ -292,7 +286,7 @@
         </table>
     </div>
 
-    <button class="btn-export" onclick="exportToCSV()">📊 一鍵匯出彩色精裝試算表 (EXCEL / CSV)</button>
+    <button class="btn-export" onclick="exportToCSV()">匯出試算表 (CSV)</button>
 
     <div class="definition-box">
         <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
@@ -480,47 +474,46 @@ function exportToCSV() {
     const d = currentDataState.inputs;
     let csvContent = "";
     
-    // 1. 初始輸入條件區 (精簡留白，方便閱讀)
-    csvContent += "=== 1. 初始持有與貸款輸入條件 ===\r\n";
+    // 改良：乾淨冷淡的審計報告排版風格
+    csvContent += "==================================================\r\n";
+    csvContent += " 房屋投資報酬分析報告 (INITIAL CONDITIONS)\r\n";
+    csvContent += "==================================================\r\n";
     csvContent += `房屋總價,${d.totalPriceMax},萬元\r\n`;
     csvContent += `房屋坪數,${d.pingCount},坪\r\n`;
-    csvContent += `買入推算單價,${d.buyPricePerPing.toFixed(2)},萬元/坪\r\n`;
+    csvContent += `買入單價,${d.buyPricePerPing.toFixed(2)},萬元/坪\r\n`;
     csvContent += `房貸利率,${d.interestRate},%\r\n`;
-    csvContent += `自訂寬限期,${d.graceYears},年\r\n`;
+    csvContent += `寬限期設定,${d.graceYears},年\r\n`;
     csvContent += `預期月租金,${d.monthlyRent},元\r\n`;
-    csvContent += `預計持有年期,${d.holdingYears},年 (房地合一稅率: ${(currentDataState.taxRate*100)}%)\r\n`;
-    csvContent += `期間累積租金總收入,${(d.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
-    csvContent += `買入仲介費及雜支(2%),${(d.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
+    csvContent += `預計持有年期,${d.holdingYears},年\r\n`;
+    csvContent += `房地合一稅率,${(currentDataState.taxRate*100)},%\r\n`;
+    csvContent += `累積租金總收入,${(d.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `買入期初費用(2%),${(d.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
     
-    // 2. 交叉試算結果資料表
-    csvContent += "=== 2. 未來售價與貸款成數交叉分析大表 ===\r\n";
+    csvContent += "==================================================\r\n";
+    csvContent += " 未來售價與貸款成數交叉分析大表 (CROSS ANALYSIS)\r\n";
+    csvContent += "==================================================\r\n\r\n";
     
     currentDataState.groups.forEach(g => {
-        // 利用大量空白格建立一個醒目的「分組大Banner」
-        csvContent += `▶▶▶ [貸款成數：${g.loanPct}%] ◀◀◀,期初總投入現金: ${(g.totalInitialCash/10000).toFixed(1)}萬元 (自備: ${(g.selfPrepared/10000).toFixed(0)}萬 / 買入雜費: ${(d.buyExpenses/10000).toFixed(0)}萬),寬限期月付: 約${Math.round(g.monthlyMortgageGrace)}元 / 續期月付: 約${Math.round(g.monthlyMortgagePostGrace)}元,,,,,\r\n`;
-        
-        // 欄位標題，加入 Emoji 做視覺錨點
-        csvContent += "未來單價(萬/坪),推算總價(萬元),賣方仲介費(4% 萬元),房地合一稅(萬元),💰 累積繳納利息總成本(萬元),🚨 持有期內付出總額(萬元),📈 實質淨獲利(總額 萬元),實質年化報酬率(CAGR)\r\n";
+        csvContent += `[貸款成數設定: ${g.loanPct}%]\r\n`;
+        csvContent += `--> 期初總投入現金: ${(g.totalInitialCash/10000).toFixed(1)} 萬元 (自備款: ${(g.selfPrepared/10000).toFixed(0)} 萬 / 買入費用: ${(d.buyExpenses/10000).toFixed(0)} 萬)\r\n`;
+        csvContent += `--> 房貸月付金額度: 寬限期內約 ${Math.round(g.monthlyMortgageGrace)} 元 / 寬限期後約 ${Math.round(g.monthlyMortgagePostGrace)} 元\r\n`;
+        csvContent += "--------------------------------------------------\r\n";
+        csvContent += "未來單價(萬/坪),推算總價(萬元),賣方仲介費(萬元),房地合一稅(萬元),累積繳納利息總成本(萬元),持有期內付出總額(萬元),實質淨獲利(總額 萬元),實質年化報酬率(CAGR)\r\n";
         
         g.rows.forEach(r => {
             const cagrStr = r.cagr === -100 ? "虧損過大" : r.cagr.toFixed(2) + "%";
-            
-            // 針對實質淨獲利加上獲利(正值)或虧損(負值)的符號化提醒
-            const profitSign = r.netProfit >= 0 ? "★ " : "▲ 🚨 ";
-            const formattedNetProfit = profitSign + (r.netProfit/10000).toFixed(1);
-            
-            csvContent += `${r.targetPricePerPing},${Math.round(r.estimatedTotalPriceMax)},${(r.sellExpenses/10000).toFixed(1)},${(r.capitalGainTax/10000).toFixed(1)},${(r.totalInterestExpense/10000).toFixed(1)},${(r.totalOutflow/10000).toFixed(1)},${formattedNetProfit},${cagrStr}\r\n`;
+            csvContent += `${r.targetPricePerPing},${Math.round(r.estimatedTotalPriceMax)},${(r.sellExpenses/10000).toFixed(1)},${(r.capitalGainTax/10000).toFixed(1)},${(r.totalInterestExpense/10000).toFixed(1)},${(r.totalOutflow/10000).toFixed(1)},${(r.netProfit/10000).toFixed(1)},${cagrStr}\r\n`;
         });
-        csvContent += "\r\n"; // 組與組之間留空一行，維持大表呼吸感
+        csvContent += "--------------------------------------------------\r\n\r\n";
     });
     
-    // 3. 底部名詞定義說明
-    csvContent += "=== 💡 核心財務指標定義說明 ===\r\n";
-    csvContent += "• 累積繳納利息總成本,根據持有年期與寬限期模擬付給銀行的純利息總和。還款本金不計入成本（結算時會退回口袋）。\r\n";
-    csvContent += "• 持有期內付出總額,公式：期初總現金投入 + 持有期內繳給銀行的房貸總本利和。代表從買入到賣出前口袋掏出的現金總額，用於壓力測試。\r\n";
-    csvContent += "• 實質淨獲利（總額）,公式：(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即扣除所有成本開銷稅費後口袋純賺的利潤。\r\n";
+    csvContent += "==================================================\r\n";
+    csvContent += " 財務指標定義說明 (FINANCIAL DEFINITIONS)\r\n";
+    csvContent += "==================================================\r\n";
+    csvContent += "累積繳納利息總成本,持有期內付給銀行的純利息總和（不含還本本金）。\r\n";
+    csvContent += "持有期內付出總額,期初總現金投入 + 持有期內繳給銀行的房貸總本利和（用於現金流壓力測試）。\r\n";
+    csvContent += "實質淨獲利（總額）,(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即口袋最終純利潤。\r\n";
 
-    // 建立 Blob 與下載 (加入BOM防Excel開啟中文亂碼)
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
