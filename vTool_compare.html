@@ -140,7 +140,6 @@
         .loan-group-header.b {
             background-color: #319795 !important;
         }
-        /* 還原：與 v2 規格一致的關鍵指標著色 */
         .interest-cost { color: #b7791f; font-weight: 600; background-color: #fffaf0; }
         .outflow-cost { color: #9b2c2c; font-weight: 600; background-color: #fff5f5; }
         .profit-up { color: #e53e3e; font-weight: 600; background-color: #ebf8ff; }
@@ -199,7 +198,7 @@
             <div class="input-grid">
                 <div class="input-group">
                     <label for="totalPrice_A">房屋總價 (萬元)</label>
-                    <input type="number" id="totalPrice_A" value="2400" oninput="calculateAll()">
+                    <input type="number" id="totalPrice_A" value="2450" oninput="calculateAll()">
                 </div>
                 <div class="input-group">
                     <label for="pingCount_A">房屋坪數 (坪)</label>
@@ -221,7 +220,7 @@
                 </div>
                 <div class="input-group full-width">
                     <label for="loanPctInput_A">自訂多組貸款成數 (%)</label>
-                    <input type="text" id="loanPctInput_A" class="custom-input" value="60, 80" oninput="calculateAll()">
+                    <input type="text" id="loanPctInput_A" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
                 </div>
                 <div class="input-group full-width">
                     <label for="holdingYears_A">預計持有幾年後售出</label>
@@ -233,7 +232,7 @@
                 </div>
                 <div class="input-group full-width">
                     <label for="customPrices_A">自訂未來出售單價 (萬/坪)</label>
-                    <input type="text" id="customPrices_A" class="custom-input" value="150, 160" oninput="calculateAll()">
+                    <input type="text" id="customPrices_A" class="custom-input" value="150, 155, 160, 165" oninput="calculateAll()">
                 </div>
             </div>
             
@@ -283,11 +282,11 @@
                 </div>
                 <div class="input-group">
                     <label for="monthlyRent_B">預期月租金 (元)</label>
-                    <input type="number" id="monthlyRent_B" value="28000" oninput="calculateAll()">
+                    <input type="number" id="monthlyRent_B" value="35000" oninput="calculateAll()">
                 </div>
                 <div class="input-group full-width">
                     <label for="loanPctInput_B">自訂多組貸款成數 (%)</label>
-                    <input type="text" id="loanPctInput_B" class="custom-input" value="70, 80" oninput="calculateAll()">
+                    <input type="text" id="loanPctInput_B" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
                 </div>
                 <div class="input-group full-width">
                     <label for="holdingYears_B">預計持有幾年後售出</label>
@@ -299,7 +298,7 @@
                 </div>
                 <div class="input-group full-width">
                     <label for="customPrices_B">自訂未來出售單價 (萬/坪)</label>
-                    <input type="text" id="customPrices_B" class="custom-input" value="95, 100, 105, 110" oninput="calculateAll()">
+                    <input type="text" id="customPrices_B" class="custom-input" value="100, 105, 110, 115" oninput="calculateAll()">
                 </div>
             </div>
             
