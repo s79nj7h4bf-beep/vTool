@@ -196,23 +196,25 @@
                     <label for="pingCount_A">房屋坪數 (坪)</label>
                     <input type="number" id="pingCount_A" value="16.9" step="0.01" oninput="calculateAll()">
                 </div>
-                <div class="input-group">
-                    <label for="interestRate_A">房貸利率 (%)</label>
-                    <input type="number" id="interestRate_A" value="2.6" step="0.01" oninput="calculateAll()">
-                </div>
-                <div class="input-group">
-                    <label for="graceYears_A">寬限期 (年)</label>
-                    <input type="number" id="graceYears_A" value="3" min="0" oninput="calculateAll()">
-                </div>
-                <div class="input-group full-width">
-                    <label for="loanPctInput_A">自訂多組貸款成數 (%)</label>
-                    <input type="text" id="loanPctInput_A" class="custom-input" value="60, 80" oninput="calculateAll()">
+                <div class="input-grid" style="margin-bottom: 0; gap: 10px; grid-column: span 1;">
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="interestRate_A">利率 (%)</label>
+                        <input type="number" id="interestRate_A" value="2.6" step="0.01" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="graceYears_A">寬限 (年)</label>
+                        <input type="number" id="graceYears_A" value="3" min="0" oninput="calculateAll()">
+                    </div>
                 </div>
                 <div class="input-group">
                     <label for="monthlyRent_A">預期月租金 (元)</label>
                     <input type="number" id="monthlyRent_A" value="35000" oninput="calculateAll()">
                 </div>
-                <div class="input-group">
+                <div class="input-group full-width">
+                    <label for="loanPctInput_A">自訂多組貸款成數 (%)</label>
+                    <input type="text" id="loanPctInput_A" class="custom-input" value="60, 80" oninput="calculateAll()">
+                </div>
+                <div class="input-group full-width">
                     <label for="holdingYears_A">預計持有幾年後售出</label>
                     <select id="holdingYears_A" onchange="calculateAll()">
                         <option value="3">3 年 (稅 35%)</option>
@@ -260,23 +262,25 @@
                     <label for="pingCount_B">房屋坪數 (坪)</label>
                     <input type="number" id="pingCount_B" value="19.41" step="0.01" oninput="calculateAll()">
                 </div>
-                <div class="input-group">
-                    <label for="interestRate_B">房貸利率 (%)</label>
-                    <input type="number" id="interestRate_B" value="2.6" step="0.01" oninput="calculateAll()">
-                </div>
-                <div class="input-group">
-                    <label for="graceYears_B">寬限期 (年)</label>
-                    <input type="number" id="graceYears_B" value="3" min="0" oninput="calculateAll()">
-                </div>
-                <div class="input-group full-width">
-                    <label for="loanPctInput_B">自訂多組貸款成數 (%)</label>
-                    <input type="text" id="loanPctInput_B" class="custom-input" value="70, 80" oninput="calculateAll()">
+                <div class="input-grid" style="margin-bottom: 0; gap: 10px; grid-column: span 1;">
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="interestRate_B">利率 (%)</label>
+                        <input type="number" id="interestRate_B" value="2.6" step="0.01" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="graceYears_B">寬限 (年)</label>
+                        <input type="number" id="graceYears_B" value="3" min="0" oninput="calculateAll()">
+                    </div>
                 </div>
                 <div class="input-group">
                     <label for="monthlyRent_B">預期月租金 (元)</label>
                     <input type="number" id="monthlyRent_B" value="28000" oninput="calculateAll()">
                 </div>
-                <div class="input-group">
+                <div class="input-group full-width">
+                    <label for="loanPctInput_B">自訂多組貸款成數 (%)</label>
+                    <input type="text" id="loanPctInput_B" class="custom-input" value="70, 80" oninput="calculateAll()">
+                </div>
+                <div class="input-group full-width">
                     <label for="holdingYears_B">預計持有幾年後售出</label>
                     <select id="holdingYears_B" onchange="calculateAll()">
                         <option value="3">3 年 (稅 35%)</option>
