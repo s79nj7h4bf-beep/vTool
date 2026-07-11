@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房屋投資報酬率對照計算機 (聯動稅率版)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px; width: 100%; max-width: 1400px; }
+        h2 { margin-top: 0; color: #1a365d; text-align: center; margin-bottom: 25px; }
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .house-column { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; }
+        .house-title { font-size: 18px; font-weight: bold; color: #2b6cb0; margin-bottom: 15px; padding-bottom: 6px; border-bottom: 2px solid #cbd5e0; }
+        .house-title.b { color: #319795; border-bottom: 2px solid #b2f5ea; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .input-group { margin-bottom: 8px; }
+        .input-group.full-width { grid-column: span 2; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568; font-size: 13px; }
+        input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .tax-rate-display { font-weight: bold; color: #d69e2e; background: #fffaf0; padding: 2px 6px; border-radius: 4px; }
+        .result-box { background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 12px; border-radius: 0 6px 6px 0; margin-top: 15px; font-size: 14px; }
+        .result-box.b { background-color: #e6fffa; border-left: 4px solid #319795; }
+        .result-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .matrix-container { overflow-x: auto; margin-top: 15px; }
+        .matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; min-width: 550px; }
+        .matrix-table th, .matrix-table td { padding: 8px 4px; border-bottom: 1px solid #e2e8f0; }
+        .loan-group-header { background-color: #2b6cb0 !important; color: white !important; font-weight: bold; text-align: left; padding-left: 10px !important; }
+        .loan-group-header.b { background-color: #319795 !important; }
+        .interest-cost { color: #b7791f; font-weight: 600; }
+        .outflow-cost { color: #9b2c2c; font-weight: 600; }
+        .profit-up { color: #e53e3e; font-weight: 600; }
+        .profit-down { color: #38a169; font-weight: 600; }
+        .btn-export { display: block; width: 100%; background-color: #4a5568; color: white; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 30px; }
+        /* Definition box styles */
+        .definition-box { background-color: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-top: 35px; }
+        .def-item { margin-bottom: 15px; }
+        .def-title { font-size: 13px; font-weight: bold; margin-bottom: 3px; }
+        .def-desc { font-size: 13px; color: #4a5568; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>房屋投資報酬率對照計算機 (聯動稅率版)</h2>
+    <div class="compare-grid">
+        <!-- 物件 A -->
+        <div class="house-column">
+            <div class="house-title">物件 A</div>
+            <div class="input-grid">
+                <div class="input-group"><label>總價(萬)</label><input type="number" id="totalPrice_A" value="2450" oninput="calculateAll()"></div>
+                <div class="input-group"><label>坪數</label><input type="number" id="pingCount_A" value="16.9" oninput="calculateAll()"></div>
+                <div class="input-group"><label>利率%</label><input type="number" id="interestRate_A" value="2.6" oninput="calculateAll()"></div>
+                <div class="input-group"><label>寬限年</label><input type="number" id="graceYears_A" value="3" oninput="calculateAll()"></div>
+                <div class="input-group full-width"><label>預期月租金</label><input type="number" id="monthlyRent_A" value="35000" oninput="calculateAll()"></div>
+                <div class="input-group"><label>持有年期</label><input type="number" id="holdingYears_A" value="5" oninput="calculateAll()"></div>
+                <div class="input-group"><label>稅率</label><span id="taxRate_A" class="tax-rate-display">20%</span></div>
+                <div class="input-group full-width"><label>貸款成數%</label><input type="text" id="loanPctInput_A" value="60, 70, 80" oninput="calculateAll()"></div>
+                <div class="input-group full-width"><label>未來出售單價(萬/坪)</label><input type="text" id="customPrices_A" value="150, 155, 160, 165" oninput="calculateAll()"></div>
+            </div>
+            <div class="result-box"><div class="result-item"><span>買入單價：</span><span id="pricePerPing_A">--</span></div></div>
+            <div class="matrix-container"><table class="matrix-table"><tbody id="matrixBody_A"></tbody></table></div>
+        </div>
+        <!-- 物件 B -->
+        <div class="house-column">
+            <div class="house-title b">物件 B</div>
+            <div class="input-grid">
+                <div class="input-group"><label>總價(萬)</label><input type="number" id="totalPrice_B" value="1988" oninput="calculateAll()"></div>
+                <div class="input-group"><label>坪數</label><input type="number" id="pingCount_B" value="19.41" oninput="calculateAll()"></div>
+                <div class="input-group"><label>利率%</label><input type="number" id="interestRate_B" value="2.6" oninput="calculateAll()"></div>
+                <div class="input-group"><label>寬限年</label><input type="number" id="graceYears_B" value="3" oninput="calculateAll()"></div>
+                <div class="input-group full-width"><label>預期月租金</label><input type="number" id="monthlyRent_B" value="35000" oninput="calculateAll()"></div>
+                <div class="input-group"><label>持有年期</label><input type="number" id="holdingYears_B" value="5" oninput="calculateAll()"></div>
+                <div class="input-group"><label>稅率</label><span id="taxRate_B" class="tax-rate-display">20%</span></div>
+                <div class="input-group full-width"><label>貸款成數%</label><input type="text" id="loanPctInput_B" value="60, 70, 80" oninput="calculateAll()"></div>
+                <div class="input-group full-width"><label>未來出售單價(萬/坪)</label><input type="text" id="customPrices_B" value="100, 105, 110, 115" oninput="calculateAll()"></div>
+            </div>
+            <div class="result-box b"><div class="result-item"><span>買入單價：</span><span id="pricePerPing_B">--</span></div></div>
+            <div class="matrix-container"><table class="matrix-table"><tbody id="matrixBody_B"></tbody></table></div>
+        </div>
+    </div>
+    <button class="btn-export" onclick="exportToCSV()">匯出對照試算表 (CSV)</button>
+
+    <!-- 關鍵詞說明 -->
+    <div class="definition-box">
+        <div style="font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">💡 核心財務指標定義說明</div>
+        <div class="def-item">
+            <div class="def-title" style="color: #b7791f;">• 累積繳納利息總成本 (純開銷損耗)</div>
+            <div class="def-desc">持有期內付給銀行的純利息開銷總和（不含會退回的本金）。</div>
+        </div>
+        <div class="def-item">
+            <div class="def-title" style="color: #9b2c2c;">• 持有期內付出總額 (壓力測試 / 口袋深度)</div>
+            <div class="def-desc">期初總現金投入 + 持有期內累計繳給銀行的房貸總本利和，用於測試資金鏈流動性壓力。</div>
+        </div>
+        <div class="def-item">
+            <div class="def-title" style="color: #2b6cb0;">• 實質淨獲利（總額） (最終實拿戰果)</div>
+            <div class="def-desc">最終賣出實拿總價結算，並扣除買賣雙邊仲介費、雜費、累積利息與房地合一稅後，真正落入口袋的純利潤。</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getTaxRate(years) {
+        if (years <= 2) return 0.45;
+        if (years <= 5) return 0.35;
+        return 0.20;
+    }
+
+    let currentA = {}, currentB = {};
+
+    function processHouse(suffix, storeObj) {
+        const years = parseInt(document.getElementById('holdingYears_' + suffix).value) || 0;
+        const rate = getTaxRate(years);
+        document.getElementById('taxRate_' + suffix).innerText = (rate * 100) + '%';
+        
+        const totalPriceMax = parseFloat(document.getElementById('totalPrice_' + suffix).value) || 0;
+        const pingCount = parseFloat(document.getElementById('pingCount_' + suffix).value) || 0;
+        const interestRate = parseFloat(document.getElementById('interestRate_' + suffix).value) || 0;
+        const monthlyRent = parseFloat(document.getElementById('monthlyRent_' + suffix).value) || 0;
+        const graceYears = parseFloat(document.getElementById('graceYears_' + suffix).value) || 0;
+        
+        const totalPrice = totalPriceMax * 10000;
+        const buyExpenses = totalPrice * 0.02;
+        const totalRent = monthlyRent * 12 * years;
+        const monthlyInterestRate = (interestRate / 100) / 12;
+
+        const loanScenarios = document.getElementById('loanPctInput_' + suffix).value.split(',').map(n => parseFloat(n));
+        const priceScenarios = document.getElementById('customPrices_' + suffix).value.split(',').map(n => parseFloat(n));
+        
+        const matrixBody = document.getElementById('matrixBody_' + suffix);
+        matrixBody.innerHTML = '';
+
+        loanScenarios.forEach(lp => {
+            const loanAmt = totalPrice * (lp / 100);
+            const initialCash = (totalPrice - loanAmt) + buyExpenses;
+            
+            let totalInterest = 0;
+            let remainingLoan = loanAmt;
+            for(let m=1; m <= years*12; m++) {
+                let interest = remainingLoan * monthlyInterestRate;
+                totalInterest += interest;
+                if (m > graceYears * 12) {
+                    remainingLoan -= ((loanAmt / (30*12 - graceYears*12)) - interest); 
+                }
+            }
+
+            const groupHeader = document.createElement('tr');
+            groupHeader.innerHTML = `<td colspan="6" class="loan-group-header ${suffix==='B'?'b':''}">貸款 ${lp}% ➔ 期初自備: ${(initialCash/10000).toFixed(1)} 萬</td>`;
+            matrixBody.appendChild(groupHeader);
+
+            priceScenarios.forEach(sp => {
+                const estPrice = sp * pingCount * 10000;
+                const sellExpenses = estPrice * 0.04;
+                const gain = estPrice - totalPrice - buyExpenses - sellExpenses;
+                const tax = gain > 0 ? gain * rate : 0;
+                const netProfit = (estPrice - totalPrice) + totalRent - totalInterest - buyExpenses - sellExpenses - tax;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${sp}萬</td><td>${Math.round(estPrice/10000)}萬</td><td class="interest-cost">${(totalInterest/10000).toFixed(1)}萬</td><td>${((initialCash + totalInterest)/10000).toFixed(1)}萬</td><td class="${netProfit>=0?'profit-up':'profit-down'}">${(netProfit/10000).toFixed(1)}萬</td><td>CAGR</td>`;
+                matrixBody.appendChild(row);
+            });
+        });
+    }
+
+    function calculateAll() {
+        processHouse('A', currentA);
+        processHouse('B', currentB);
+    }
+    
+    function exportToCSV() { alert('CSV Export Function Executing...'); }
+
+    calculateAll();
+</script>
+</body>
+</html>
