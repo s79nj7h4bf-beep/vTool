@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房屋投資報酬率計算機</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 30px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #1a365d;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2b6cb0;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+        .input-group {
+            margin-bottom: 5px;
+        }
+        .input-group.full-width {
+            grid-column: span 2;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        }
+        input.custom-input {
+            border-color: #4a5568;
+            background-color: #edf2f7;
+        }
+        .result-box {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 20px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+        .matrix-container {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: center;
+        }
+        .matrix-table th, .matrix-table td {
+            padding: 10px 6px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .matrix-table th {
+            background-color: #edf2f7;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        .loan-group-header {
+            background-color: #2b6cb0 !important;
+            color: white !important;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 15px !important;
+            font-size: 14px;
+        }
+        .profit-up { color: #e53e3e; font-weight: 600; }
+        .profit-down { color: #38a169; font-weight: 600; }
+        .cagr-text { font-weight: bold; color: #2b6cb0; font-size: 14px; }
+        .holding-box {
+            background-color: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        .definition-box {
+            background-color: #fafafa;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 35px;
+        }
+        .def-item {
+            margin-bottom: 18px;
+        }
+        .def-item:last-child {
+            margin-bottom: 0;
+        }
+        .def-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .def-formula {
+            font-family: Consolas, Monaco, monospace;
+            background-color: #edf2f7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #2d3748;
+            display: inline-block;
+            margin: 4px 0;
+        }
+        .def-desc {
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+        .btn-export {
+            display: block;
+            width: 100%;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.15s ease;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .btn-export:hover {
+            background-color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>房屋投資報酬率計算機</h2>
+    
+    <div class="section-title">1. 輸入初始持有與貸款條件</div>
+    <div class="input-grid">
+        <div class="input-group">
+            <label for="totalPrice">房屋總價 (萬元)</label>
+            <input type="number" id="totalPrice" value="2000" oninput="calculateAll()">
+        </div>
+        
+        <div class="input-grid" style="margin-bottom: 0; gap: 10px;">
+            <div class="input-group">
+                <label for="pingCount">房屋坪數 (坪)</label>
+                <input type="number" id="pingCount" value="19.41" step="0.01" oninput="calculateAll()">
+            </div>
+            <div class="input-group">
+                <label for="interestRate">房貸利率 (%)</label>
+                <input type="number" id="interestRate" value="2.68" step="0.01" oninput="calculateAll()">
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label for="loanPercentagesInput">自訂多組貸款成數 (%)</label>
+            <input type="text" id="loanPercentagesInput" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
+            <div class="help-text">提示：多組貸款成數請用逗號隔開</div>
+        </div>
+        
+        <div class="input-group">
+            <label for="graceYearsInput">自訂寬限期 (年)</label>
+            <input type="number" id="graceYearsInput" value="3" min="0" max="10" oninput="calculateAll()">
+        </div>
+
+        <div class="input-group full-width">
+            <label for="monthlyRent">預期月租金 (元)</label>
+            <input type="number" id="monthlyRent" value="35000" oninput="calculateAll()">
+        </div>
+    </div>
+    
+    <div class="result-box">
+        <div class="result-item">
+            <span>買入每坪單價：</span>
+            <span id="pricePerPing" style="font-weight: 600;">-- 萬元/坪</span>
+        </div>
+        <div class="result-item">
+            <span>買入仲介費 (1%) + 代書規費雜支 (固定1%)：</span>
+            <span id="buyExpenses" style="color:#e53e3e;">-- 萬元</span>
+        </div>
+        <div style="font-size: 12px; color:#718096; margin-top: 5px; border-top: 1px dotted #cbd5e0; padding-top: 5px;">
+            * 詳細的分組自備款、月還款與累積利息已整合至下方表格中。
+        </div>
+    </div>
+
+    <div class="section-title">2. 設定持有年期與未來售價/成數交叉試算</div>
+    
+    <div class="holding-box">
+        <div class="input-grid">
+            <div class="input-group">
+                <label for="holdingYears">預計持有幾年後售出？ (自填年期)</label>
+                <!-- 房地合一稅率說明與輸入框整合，支援自填年數 -->
+                <input type="number" id="holdingYears" value="5" min="1" max="100" step="1" oninput="calculateAll()">
+                <div class="help-text" id="taxRateHelpText" style="color:#2b6cb0; font-weight:600;">對應房地合一稅率：20%</div>
+            </div>
+            <div class="input-group">
+                <label for="customPricesInput">自訂未來出售單價 (萬/坪)</label>
+                <input type="text" id="customPricesInput" class="custom-input" value="115, 125, 135, 145" oninput="calculateAll()">
+                <div class="help-text">提示：多組價格請用逗號或空格隔開</div>
+            </div>
+        </div>
+        <div style="margin-top: 5px; font-size: 13px; color: #718096; border-top: 1px dotted #e2e8f0; padding-top: 8px;">
+            * 期間累積租金總收入：<span id="infoTotalRent" style="color:#2f855a; font-weight:600;">--</span>
+        </div>
+    </div>
+
+    <div class="matrix-container">
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>未來單價<br>(萬/坪)</th>
+                    <th>推算總價<br>(萬元)</th>
+                    <th>賣方仲介費<br>(4%)</th>
+                    <th>房地合一稅<br>(可扣除費用)</th>
+                    <th style="background-color: #fffaf0; color: #b7791f;">累積繳納<br>利息總成本</th>
+                    <th style="background-color: #fff5f5; color: #9b2c2c;">持有期內<br>付出總額</th>
+                    <th style="background-color: #ebf8ff; color: #2b6cb0;">實質淨獲利<br>(總額)</th>
+                    <th>實質年化<br>報酬率 (CAGR)</th>
+                </tr>
+            </thead>
+            <tbody id="matrixBody">
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn-export" onclick="exportToCSV()">匯出試算表 (CSV)</button>
+
+    <div class="definition-box">
+        <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            💡 核心財務指標定義說明
+        </div>
+        
+        <div class="def-item">
+            <div class="def-title" style="color: #b7791f;">• 累積繳納利息總成本 (純開銷損耗)</div>
+            <div class="def-desc">
+                根據所選的「持有年期」與「寬限期」，精確模擬出<b>這幾年內付給銀行的房貸純利息總和</b>。
+                <br><span style="color:#718096;">*註：每個月繳的房貸「本金」不包含在內，因為賣屋結算時已還本金會退回口袋，唯有利息是無法回收的純資金成本。</span>
+            </div>
+        </div>
+        
+        <div class="def-item">
+            <div class="def-title" style="color: #9b2c2c;">• 持有期內付出總額 (壓力測試 / 口袋深度)</div>
+            <div class="def-formula">公式：期初總現金投入 (自備款 + 買入2%雜費) + 持有期內繳給銀行的房貸總本利和</div>
+            <div class="def-desc">
+                代表<b>從簽約買入到最終賣出前，你累計從口袋中掏出的實質現金總額</b>。這項指標常用於現金流的壓力測試，確保在寬限期結束、房貸跳升後，個人的備用資金仍充沛，不至於面臨斷頭風險。
+            </div>
+        </div>
+
+        <div class="def-item">
+            <div class="def-title" style="color: #2b6cb0;">• 實質淨獲利（總額） (最終實拿戰果)</div>
+            <div class="def-formula">公式：(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅</div>
+            <div class="def-desc">
+                代表<b>把房子賣掉、清償銀行賸餘貸款、並繳清所有稅費與仲介費後，扣除最初拿出的期初總現金，留在你口袋裡的「純利潤」</b>。此指標已將持有期間的租金收入與利息支出等全面大清算，最貼近真實投資效益。
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let currentDataState = {};
+
+function calculateAll() {
+    const totalPriceMax = parseFloat(document.getElementById('totalPrice').value) || 0;
+    const pingCount = parseFloat(document.getElementById('pingCount').value) || 0;
+    const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
+    const monthlyRent = parseFloat(document.getElementById('monthlyRent').value) || 0;
+    
+    // 取得自填的持有年期
+    const holdingYears = parseInt(document.getElementById('holdingYears').value) || 1;
+    const graceYears = parseFloat(document.getElementById('graceYearsInput').value) || 0;
+    
+    const totalPrice = totalPriceMax * 10000; 
+    const buyExpenses = totalPrice * 0.02; 
+    const buyPricePerPing = pingCount > 0 ? (totalPriceMax / pingCount) : 0;
+    const yearlyRent = monthlyRent * 12;
+    const totalRentIncome = yearlyRent * holdingYears;
+    const monthlyInterestRate = (interestRate / 100) / 12;
+    
+    const totalMonths = 30 * 12; 
+    const graceMonths = graceYears * 12;
+    const remainingMonths = totalMonths - graceMonths; 
+
+    document.getElementById('pricePerPing').innerText = buyPricePerPing.toFixed(1) + " 萬元/坪";
+    document.getElementById('buyExpenses').innerText = (buyExpenses / 10000).toFixed(1) + " 萬元";
+    document.getElementById('infoTotalRent').innerText = (totalRentIncome / 10000).toFixed(0) + " 萬元";
+
+    const loanInputStr = document.getElementById('loanPercentagesInput').value;
+    let loanScenarios = loanInputStr
+        .split(/[\s,;，；]+/)
+        .map(l => parseFloat(l))
+        .filter(l => !isNaN(l) && l >= 0 && l <= 100);
+
+    const pricesInputStr = document.getElementById('customPricesInput').value;
+    let priceScenarios = pricesInputStr
+        .split(/[\s,;，；]+/)
+        .map(p => parseFloat(p))
+        .filter(p => !isNaN(p) && p > 0);
+        
+    const matrixBody = document.getElementById('matrixBody');
+    matrixBody.innerHTML = '';
+    
+    if (loanScenarios.length === 0 || priceScenarios.length === 0) {
+        matrixBody.innerHTML = `<tr><td colspan="8" style="color:#aaa; padding: 20px;">請確保已輸入貸款成數與預期售價</td></tr>`;
+        return;
+    }
+    
+    // 依自填年期與自住無出租條件，動態更新房地合一稅率內容
+    let taxRate = 0.45;
+    let taxDesc = "";
+    let isSelfUseTaxFree = false;
+    
+    if (holdingYears >= 6 && monthlyRent === 0) {
+        // 滿 6 年且無出租 (月租金為0)，觸發 400 萬免稅額 + 10% 稅率
+        taxRate = 0.10;
+        isSelfUseTaxFree = true;
+        taxDesc = "滿 6 年自住無出租 (免稅額 400 萬，超額 10%)";
+    } else if (holdingYears < 2) {
+        taxRate = 0.45;
+        taxDesc = "未滿 2 年 (稅率 45%)";
+    } else if (holdingYears < 5) {
+        taxRate = 0.35;
+        taxDesc = "滿 2 年未滿 5 年 (稅率 35%)";
+    } else if (holdingYears < 10) {
+        taxRate = 0.20;
+        taxDesc = "滿 5 年未滿 10 年 (稅率 20%)" + (holdingYears >= 6 ? " *提示：月租金設為 0 可啟用 6 年自住優惠" : "");
+    } else {
+        taxRate = 0.15;
+        taxDesc = "滿 10 年以上 (稅率 15%)" + (holdingYears >= 6 ? " *提示：月租金設為 0 可啟用 6 年自住優惠" : "");
+    }
+    
+    // 即時顯示對應的房地合一稅訊息
+    document.getElementById('taxRateHelpText').innerText = `對應房地合一稅：${taxDesc}`;
+
+    loanScenarios.sort((a, b) => a - b);
+
+    currentDataState = {
+        inputs: { totalPriceMax, pingCount, interestRate, graceYears, monthlyRent, holdingYears, buyPricePerPing, buyExpenses, totalRentIncome },
+        taxRate: taxRate,
+        isSelfUseTaxFree: isSelfUseTaxFree,
+        groups: []
+    };
+
+    loanScenarios.forEach(loanPct => {
+        const loanAmount = totalPrice * (loanPct / 100);
+        const selfPrepared = totalPrice - loanAmount;
+        const totalInitialCash = selfPrepared + buyExpenses; 
+        
+        const monthlyMortgageGrace = loanAmount * monthlyInterestRate;
+        let monthlyMortgagePostGrace = 0;
+        if (remainingMonths > 0 && monthlyInterestRate > 0) {
+            monthlyMortgagePostGrace = loanAmount * (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, remainingMonths)) / (Math.pow(1 + monthlyInterestRate, remainingMonths) - 1);
+        } else if (remainingMonths > 0) {
+            monthlyMortgagePostGrace = loanAmount / remainingMonths;
+        }
+
+        let totalInterestExpense = 0;
+        let totalMortgagePaidInHolding = 0; 
+        let remainingLoan = loanAmount;
+        const monthsToHold = holdingYears * 12;
+        
+        for (let month = 1; month <= monthsToHold; month++) {
+            const interestOfThisMonth = remainingLoan * monthlyInterestRate;
+            totalInterestExpense += interestOfThisMonth;
+            
+            if (month <= graceMonths) {
+                totalMortgagePaidInHolding += monthlyMortgageGrace;
+            } else {
+                totalMortgagePaidInHolding += monthlyMortgagePostGrace;
+                const principalOfThisMonth = monthlyMortgagePostGrace - interestOfThisMonth;
+                remainingLoan -= principalOfThisMonth;
+            }
+        }
+
+        const groupRow = document.createElement('tr');
+        const graceText = graceYears > 0 ? `寬限期內月付:約${Math.round(monthlyMortgageGrace).toLocaleString()}元 / 第${graceYears+1}年起月付:約${Math.round(monthlyMortgagePostGrace).toLocaleString()}元` : `無寬限期月付:約${Math.round(monthlyMortgagePostGrace).toLocaleString()}元`;
+        
+        groupRow.innerHTML = `
+            <td colspan="8" class="loan-group-header">
+                貸款成數：${loanPct}% ➔【期初總投入現金：${(totalInitialCash / 10000).toFixed(1)} 萬元 (自備 ${(selfPrepared / 10000).toFixed(0)} 萬 + 雜費 ${(buyExpenses / 10000).toFixed(0)} 萬)】 ｜ ${graceText}
+            </td>
+        `;
+        matrixBody.appendChild(groupRow);
+
+        let groupData = {
+            loanPct, totalInitialCash, selfPrepared, monthlyMortgageGrace, monthlyMortgagePostGrace, totalInterestExpense, totalMortgagePaidInHolding, rows: []
+        };
+
+        priceScenarios.forEach(targetPricePerPing => {
+            const estimatedTotalPriceMax = targetPricePerPing * pingCount;
+            const estimatedTotalPrice = estimatedTotalPriceMax * 10000;
+            
+            const sellExpenses = estimatedTotalPrice * 0.04;
+            const capitalGain = estimatedTotalPrice - totalPrice - buyExpenses - sellExpenses;
+            
+            // 房地合一稅計算：符合滿6年自住無出租，則先扣除 400 萬免稅額，超額部分以 10% 計稅
+            let capitalGainTax = 0;
+            if (capitalGain > 0) {
+                if (isSelfUseTaxFree) {
+                    const taxableGain = Math.max(0, capitalGain - 4000000);
+                    capitalGainTax = taxableGain * 0.10;
+                } else {
+                    capitalGainTax = capitalGain * taxRate;
+                }
+            }
+            
+            const propertyAppreciation = estimatedTotalPrice - totalPrice;
+            const netProfit = propertyAppreciation + totalRentIncome - totalInterestExpense - buyExpenses - sellExpenses - capitalGainTax;
+            
+            const totalOutflow = totalInitialCash + totalMortgagePaidInHolding;
+            
+            let cagr = 0;
+            const finalCashReturned = totalInitialCash + netProfit;
+            if (totalInitialCash > 0 && finalCashReturned > 0) {
+                cagr = (Math.pow((finalCashReturned / totalInitialCash), (1 / holdingYears)) - 1) * 100;
+            } else if (finalCashReturned <= 0) {
+                cagr = -100;
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${targetPricePerPing}</strong> 萬</td>
+                <td>${Math.round(estimatedTotalPriceMax).toLocaleString()} 萬</td>
+                <td>${(sellExpenses / 10000).toFixed(1)} 萬</td>
+                <td>${capitalGainTax > 0 ? (capitalGainTax / 10000).toFixed(1) + ' 萬' : '0 萬'}</td>
+                <td style="color: #b7791f; font-weight: 600; background-color: #fffaf0;">${(totalInterestExpense / 10000).toFixed(1)} 萬</td>
+                <td style="color: #9b2c2c; font-weight: 600; background-color: #fff5f5;">${(totalOutflow / 10000).toFixed(1)} 萬</td>
+                <td class="${netProfit >= 0 ? 'profit-up' : 'profit-down'}" style="background-color: #ebf8ff;">${(netProfit / 10000).toFixed(1)} 萬元</td>
+                <td class="cagr-text">${cagr === -100 ? '虧損過大' : cagr.toFixed(2) + ' %'}</td>
+            `;
+            matrixBody.appendChild(row);
+
+            groupData.rows.push({
+                targetPricePerPing, estimatedTotalPriceMax, sellExpenses, capitalGainTax, totalInterestExpense, totalOutflow, netProfit, cagr
+            });
+        });
+
+        currentDataState.groups.push(groupData);
+    });
+}
+
+function exportToCSV() {
+    if (!currentDataState.inputs) return;
+    
+    const d = currentDataState.inputs;
+    let csvContent = "";
+    
+    csvContent += "==================================================\r\n";
+    csvContent += " 房屋投資報酬分析報告 (INITIAL CONDITIONS)\r\n";
+    csvContent += "==================================================\r\n";
+    csvContent += `房屋總價,${d.totalPriceMax},萬元\r\n`;
+    csvContent += `房屋坪數,${d.pingCount},坪\r\n`;
+    csvContent += `買入單價,${d.buyPricePerPing.toFixed(2)},萬元/坪\r\n`;
+    csvContent += `房貸利率,${d.interestRate},%\r\n`;
+    csvContent += `寬限期設定,${d.graceYears},年\r\n`;
+    csvContent += `預期月租金,${d.monthlyRent},元\r\n`;
+    csvContent += `預計持有年期,${d.holdingYears},年\r\n`;
+    
+    // 匯出時動態判定房地合一稅的文字說明
+    const taxRateStr = currentDataState.isSelfUseTaxFree ? "10% (自住滿6年優惠，400萬免稅)" : (currentDataState.taxRate*100) + "%";
+    csvContent += `房地合一稅率,${taxRateStr},\r\n`;
+    csvContent += `累積租金總收入,${(d.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `買入期初費用(2%),${(d.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
+    
+    csvContent += "==================================================\r\n";
+    csvContent += " 未來售價與貸款成數交叉分析大表 (CROSS ANALYSIS)\r\n";
+    csvContent += "==================================================\r\n\r\n";
+    
+    currentDataState.groups.forEach(g => {
+        csvContent += `[貸款成數設定: ${g.loanPct}%]\r\n`;
+        csvContent += `--> 期初總投入現金: ${(g.totalInitialCash/10000).toFixed(1)} 萬元 (自備款: ${(g.selfPrepared/10000).toFixed(0)} 萬 / 買入費用: ${(d.buyExpenses/10000).toFixed(0)} 萬)\r\n`;
+        csvContent += `--> 房貸月付金額度: 寬限期內約 ${Math.round(g.monthlyMortgageGrace)} 元 / 寬限期後約 ${Math.round(g.monthlyMortgagePostGrace)} 元\r\n`;
+        csvContent += "--------------------------------------------------\r\n";
+        csvContent += "未來單價(萬/坪),推算總價(萬元),賣方仲介費(萬元),房地合一稅(萬元),累積繳納利息總成本(萬元),持有期內付出總額(萬元),實質淨獲利(總額 萬元),實質年化報酬率(CAGR)\r\n";
+        
+        g.rows.forEach(r => {
+            const cagrStr = r.cagr === -100 ? "虧損過大" : r.cagr.toFixed(2) + "%";
+            csvContent += `${r.targetPricePerPing},${Math.round(r.estimatedTotalPriceMax)},${(r.sellExpenses/10000).toFixed(1)},${(r.capitalGainTax/10000).toFixed(1)},${(r.totalInterestExpense/10000).toFixed(1)},${(r.totalOutflow/10000).toFixed(1)},${(r.netProfit/10000).toFixed(1)},${cagrStr}\r\n`;
+        });
+        csvContent += "--------------------------------------------------\r\n\r\n";
+    });
+    
+    csvContent += "==================================================\r\n";
+    csvContent += " 財務指標定義說明 (FINANCIAL DEFINITIONS)\r\n";
+    csvContent += "==================================================\r\n";
+    csvContent += "累積繳納利息總成本,持有期內付給銀行的純利息總和（不含還本本金）。\r\n";
+    csvContent += "持有期內付出總額,期初總現金投入 + 持有期內繳給銀行的房貸總本利和（用於現金流壓力測試）。\r\n";
+    csvContent += "實質淨獲利（總額）,(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即口袋最終純利潤。\r\n";
+
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    
+    const fileName = `房屋投資報酬分析表_${d.totalPriceMax}萬_${d.pingCount}坪.csv`;
+    if (navigator.msSaveBlob) { 
+        navigator.msSaveBlob(blob, fileName);
+    } else {
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+// 首次載入執行
+calculateAll();
+</script>
+
+</body>
+</html>
