@@ -230,6 +230,19 @@
             <label for="monthlyRent">預期月租金 (元)</label>
             <input type="number" id="monthlyRent" value="35000" oninput="calculateAll()">
         </div>
+
+        <div class="input-group full-width">
+            <label for="rentalTaxRate">租金所得 個人綜所稅邊際稅率 (%)</label>
+            <select id="rentalTaxRate" onchange="calculateAll()">
+                <option value="0">0% (不併入計算)</option>
+                <option value="5">5%</option>
+                <option value="12" selected>12%</option>
+                <option value="20">20%</option>
+                <option value="30">30%</option>
+                <option value="40">40%</option>
+            </select>
+            <div class="help-text">租金收入以43%法定必要費用推計後，併入你的綜所稅邊際稅率課稅</div>
+        </div>
     </div>
     
     <div class="result-box">
@@ -263,7 +276,8 @@
             </div>
         </div>
         <div style="margin-top: 5px; font-size: 13px; color: #718096; border-top: 1px dotted #e2e8f0; padding-top: 8px;">
-            * 期間累積租金總收入：<span id="infoTotalRent" style="color:#2f855a; font-weight:600;">--</span>
+            * 期間累積租金總收入(稅前)：<span id="infoTotalRent" style="color:#2f855a; font-weight:600;">--</span>
+            ｜ 預估租金所得稅：<span id="infoRentTax" style="color:#c53030; font-weight:600;">--</span>
         </div>
     </div>
 
@@ -278,7 +292,7 @@
                     <th style="background-color: #fffaf0; color: #b7791f;">累積繳納<br>利息總成本</th>
                     <th style="background-color: #fff5f5; color: #9b2c2c;">持有期內<br>付出總額</th>
                     <th style="background-color: #ebf8ff; color: #2b6cb0;">實質淨獲利<br>(總額)</th>
-                    <th>實質年化<br>報酬率 (CAGR)</th>
+                    <th>實質年化<br>報酬率 (IRR)</th>
                 </tr>
             </thead>
             <tbody id="matrixBody">
@@ -311,9 +325,10 @@
 
         <div class="def-item">
             <div class="def-title" style="color: #2b6cb0;">• 實質淨獲利（總額） (最終實拿戰果)</div>
-            <div class="def-formula">公式：(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅</div>
+            <div class="def-formula">公式：(未來出售總價 - 買入總價) + 累積租金收入 - 租金所得稅 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅</div>
             <div class="def-desc">
                 代表<b>把房子賣掉、清償銀行賸餘貸款、並繳清所有稅費與仲介費後，扣除最初拿出的期初總現金，留在你口袋裡的「純利潤」</b>。此指標已將持有期間的租金收入與利息支出等全面大清算，最貼近真實投資效益。
+                <br><span style="color:#718096;">*租金所得稅：以租金收入 43% 法定必要費用推計後，併入你設定的個人綜所稅邊際稅率課稅，非單獨稅率。</span>
             </div>
         </div>
     </div>
@@ -323,31 +338,79 @@
 <script>
 let currentDataState = {};
 
+// 以逐月現金流(期初投入 -> 每月租金減房貸還款 -> 賣屋淨變現)解出月報酬率，取代僅看頭尾金額的簡化CAGR
+function solveMonthlyIRR(cashFlows) {
+    const n = cashFlows.length - 1;
+    if (n <= 0) return null;
+
+    function npv(rate) {
+        let total = 0;
+        for (let t = 0; t < cashFlows.length; t++) {
+            if (cashFlows[t] !== 0) {
+                total += cashFlows[t] / Math.pow(1 + rate, t);
+            }
+        }
+        return total;
+    }
+
+    // 下界隨期數動態調整，避免長年期(月數多)時 (1+rate)^t 發生數值下溢
+    let lo = Math.pow(1e-100, 1 / n) - 1;
+    let hi = 10; // 月報酬率上限1000%，足以涵蓋所有合理情境
+
+    let npvLo = npv(lo);
+    let npvHi = npv(hi);
+
+    if (!isFinite(npvLo) || !isFinite(npvHi) || npvLo * npvHi > 0) {
+        return null; // 現金流全程無法回本，無實數解
+    }
+
+    for (let i = 0; i < 200; i++) {
+        const mid = (lo + hi) / 2;
+        const npvMid = npv(mid);
+        if (Math.abs(npvMid) < 1e-6 || (hi - lo) < 1e-12) return mid;
+        if ((npvMid > 0) === (npvLo > 0)) {
+            lo = mid;
+            npvLo = npvMid;
+        } else {
+            hi = mid;
+        }
+    }
+    return (lo + hi) / 2;
+}
+
 function calculateAll() {
     const totalPriceMax = parseFloat(document.getElementById('totalPrice').value) || 0;
     const pingCount = parseFloat(document.getElementById('pingCount').value) || 0;
     const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
     const monthlyRent = parseFloat(document.getElementById('monthlyRent').value) || 0;
-    
+    const rentalMarginalRate = (parseFloat(document.getElementById('rentalTaxRate').value) || 0) / 100;
+
     // 取得自填的持有年期與貸款年數
     const holdingYears = parseInt(document.getElementById('holdingYears').value) || 1;
     const loanYears = parseInt(document.getElementById('loanYearsInput').value) || 30;
     const graceYears = parseFloat(document.getElementById('graceYearsInput').value) || 0;
-    
-    const totalPrice = totalPriceMax * 10000; 
-    const buyExpenses = totalPrice * 0.02; 
+
+    const totalPrice = totalPriceMax * 10000;
+    const buyExpenses = totalPrice * 0.02;
     const buyPricePerPing = pingCount > 0 ? (totalPriceMax / pingCount) : 0;
     const yearlyRent = monthlyRent * 12;
     const totalRentIncome = yearlyRent * holdingYears;
     const monthlyInterestRate = (interestRate / 100) / 12;
-    
+
+    // 租金所得稅：以43%法定必要費用推計後，併入個人綜所稅邊際稅率課稅
+    const RENTAL_EXPENSE_RATIO = 0.43;
+    const yearlyRentTax = yearlyRent * (1 - RENTAL_EXPENSE_RATIO) * rentalMarginalRate;
+    const totalRentIncomeTax = yearlyRentTax * holdingYears;
+    const monthlyRentTax = yearlyRentTax / 12;
+
     const totalMonths = loanYears * 12; // 依自填房貸年期動態分配期數
     const graceMonths = graceYears * 12;
-    const remainingMonths = totalMonths - graceMonths; 
+    const remainingMonths = totalMonths - graceMonths;
 
     document.getElementById('pricePerPing').innerText = buyPricePerPing.toFixed(1) + " 萬元/坪";
     document.getElementById('buyExpenses').innerText = (buyExpenses / 10000).toFixed(1) + " 萬元";
     document.getElementById('infoTotalRent').innerText = (totalRentIncome / 10000).toFixed(0) + " 萬元";
+    document.getElementById('infoRentTax').innerText = "-" + (totalRentIncomeTax / 10000).toFixed(1) + " 萬元";
 
     const loanInputStr = document.getElementById('loanPercentagesInput').value;
     let loanScenarios = loanInputStr
@@ -400,7 +463,7 @@ function calculateAll() {
 
     // 儲存狀態以供 CSV 匯出，加入自填貸款年期 (loanYears)
     currentDataState = {
-        inputs: { totalPriceMax, pingCount, interestRate, loanYears, graceYears, monthlyRent, holdingYears, buyPricePerPing, buyExpenses, totalRentIncome },
+        inputs: { totalPriceMax, pingCount, interestRate, loanYears, graceYears, monthlyRent, holdingYears, buyPricePerPing, buyExpenses, totalRentIncome, rentalMarginalRate, totalRentIncomeTax },
         taxRate: taxRate,
         isSelfUseTaxFree: isSelfUseTaxFree,
         groups: []
@@ -420,25 +483,30 @@ function calculateAll() {
         }
 
         let totalInterestExpense = 0;
-        let totalMortgagePaidInHolding = 0; 
+        let totalMortgagePaidInHolding = 0;
         let remainingLoan = loanAmount;
         const monthsToHold = holdingYears * 12;
-        
+        const monthlyPaymentSchedule = new Array(monthsToHold).fill(0); // 供IRR現金流使用，記錄每月實際還款額(還清後為0)
+
         for (let month = 1; month <= monthsToHold; month++) {
             // 超出房貸本期合約，債務還清後即自動結束計算
             if (remainingLoan <= 0) break;
 
             const interestOfThisMonth = remainingLoan * monthlyInterestRate;
             totalInterestExpense += interestOfThisMonth;
-            
+
             if (month <= graceMonths) {
                 totalMortgagePaidInHolding += monthlyMortgageGrace;
+                monthlyPaymentSchedule[month - 1] = monthlyMortgageGrace;
             } else {
                 totalMortgagePaidInHolding += monthlyMortgagePostGrace;
+                monthlyPaymentSchedule[month - 1] = monthlyMortgagePostGrace;
                 const principalOfThisMonth = monthlyMortgagePostGrace - interestOfThisMonth;
                 remainingLoan -= principalOfThisMonth;
             }
         }
+        const remainingLoanAtEnd = Math.max(0, remainingLoan); // 持有期滿時尚未還清的貸款餘額，賣屋時須先清償
+        const monthlyNetFlowBase = monthlyPaymentSchedule.map(payment => monthlyRent - monthlyRentTax - payment); // 每月(稅後租金收入 - 房貸還款)的淨現金流
 
         const groupRow = document.createElement('tr');
         const graceText = graceYears > 0 ? `寬限期內月付:約${Math.round(monthlyMortgageGrace).toLocaleString()}元 / 第${graceYears+1}年起月付:約${Math.round(monthlyMortgagePostGrace).toLocaleString()}元` : `無寬限期月付:約${Math.round(monthlyMortgagePostGrace).toLocaleString()}元`;
@@ -473,18 +541,18 @@ function calculateAll() {
             }
             
             const propertyAppreciation = estimatedTotalPrice - totalPrice;
-            const netProfit = propertyAppreciation + totalRentIncome - totalInterestExpense - buyExpenses - sellExpenses - capitalGainTax;
-            
+            const netProfit = propertyAppreciation + totalRentIncome - totalRentIncomeTax - totalInterestExpense - buyExpenses - sellExpenses - capitalGainTax;
+
             const totalOutflow = totalInitialCash + totalMortgagePaidInHolding;
-            
-            let cagr = 0;
-            const finalCashReturned = totalInitialCash + netProfit;
-            if (totalInitialCash > 0 && finalCashReturned > 0) {
-                cagr = (Math.pow((finalCashReturned / totalInitialCash), (1 / holdingYears)) - 1) * 100;
-            } else if (finalCashReturned <= 0) {
-                cagr = -100;
-            }
-            
+
+            // 組出完整月現金流：t=0期初投入(負) -> 每月(租金-還款) -> 最後一個月加上賣屋淨變現(含清償剩餘貸款)
+            const netSaleProceeds = estimatedTotalPrice - sellExpenses - capitalGainTax - remainingLoanAtEnd;
+            const cashFlowSeries = [-totalInitialCash, ...monthlyNetFlowBase];
+            cashFlowSeries[cashFlowSeries.length - 1] += netSaleProceeds;
+
+            const monthlyIRR = solveMonthlyIRR(cashFlowSeries);
+            const irr = monthlyIRR === null ? -100 : (Math.pow(1 + monthlyIRR, 12) - 1) * 100;
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${targetPricePerPing}</strong> 萬</td>
@@ -494,12 +562,12 @@ function calculateAll() {
                 <td style="color: #b7791f; font-weight: 600; background-color: #fffaf0;">${(totalInterestExpense / 10000).toFixed(1)} 萬</td>
                 <td style="color: #9b2c2c; font-weight: 600; background-color: #fff5f5;">${(totalOutflow / 10000).toFixed(1)} 萬</td>
                 <td class="${netProfit >= 0 ? 'profit-up' : 'profit-down'}" style="background-color: #ebf8ff;">${(netProfit / 10000).toFixed(1)} 萬元</td>
-                <td class="cagr-text">${cagr === -100 ? '虧損過大' : cagr.toFixed(2) + ' %'}</td>
+                <td class="cagr-text">${irr === -100 ? '虧損過大' : irr.toFixed(2) + ' %'}</td>
             `;
             matrixBody.appendChild(row);
 
             groupData.rows.push({
-                targetPricePerPing, estimatedTotalPriceMax, sellExpenses, capitalGainTax, totalInterestExpense, totalOutflow, netProfit, cagr
+                targetPricePerPing, estimatedTotalPriceMax, sellExpenses, capitalGainTax, totalInterestExpense, totalOutflow, netProfit, irr
             });
         });
 
@@ -528,7 +596,9 @@ function exportToCSV() {
     // 動態輸出房地合一稅判定字樣
     const taxRateStr = currentDataState.isSelfUseTaxFree ? "10% (自住滿6年優惠，400萬免稅)" : (currentDataState.taxRate*100) + "%";
     csvContent += `房地合一稅率,${taxRateStr},\r\n`;
-    csvContent += `累積租金總收入,${(d.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `累積租金總收入(稅前),${(d.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `租金所得個人邊際稅率,${d.rentalMarginalRate*100},%\r\n`;
+    csvContent += `預估租金所得稅總額,${(d.totalRentIncomeTax/10000).toFixed(1)},萬元\r\n`;
     csvContent += `買入期初費用(2%),${(d.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
     
     csvContent += "==================================================\r\n";
@@ -540,11 +610,11 @@ function exportToCSV() {
         csvContent += `--> 期初總投入現金: ${(g.totalInitialCash/10000).toFixed(1)} 萬元 (自備款: ${(g.selfPrepared/10000).toFixed(0)} 萬 / 買入費用: ${(d.buyExpenses/10000).toFixed(0)} 萬)\r\n`;
         csvContent += `--> 房貸月付金額度: 寬限期內約 ${Math.round(g.monthlyMortgageGrace)} 元 / 寬限期後約 ${Math.round(g.monthlyMortgagePostGrace)} 元\r\n`;
         csvContent += "--------------------------------------------------\r\n";
-        csvContent += "未來單價(萬/坪),推算總價(萬元),賣方仲介費(萬元),房地合一稅(萬元),累積繳納利息總成本(萬元),持有期內付出總額(萬元),實質淨獲利(總額 萬元),實質年化報酬率(CAGR)\r\n";
-        
+        csvContent += "未來單價(萬/坪),推算總價(萬元),賣方仲介費(萬元),房地合一稅(萬元),累積繳納利息總成本(萬元),持有期內付出總額(萬元),實質淨獲利(總額 萬元),實質年化報酬率(IRR)\r\n";
+
         g.rows.forEach(r => {
-            const cagrStr = r.cagr === -100 ? "虧損過大" : r.cagr.toFixed(2) + "%";
-            csvContent += `${r.targetPricePerPing},${Math.round(r.estimatedTotalPriceMax)},${(r.sellExpenses/10000).toFixed(1)},${(r.capitalGainTax/10000).toFixed(1)},${(r.totalInterestExpense/10000).toFixed(1)},${(r.totalOutflow/10000).toFixed(1)},${(r.netProfit/10000).toFixed(1)},${cagrStr}\r\n`;
+            const irrStr = r.irr === -100 ? "虧損過大" : r.irr.toFixed(2) + "%";
+            csvContent += `${r.targetPricePerPing},${Math.round(r.estimatedTotalPriceMax)},${(r.sellExpenses/10000).toFixed(1)},${(r.capitalGainTax/10000).toFixed(1)},${(r.totalInterestExpense/10000).toFixed(1)},${(r.totalOutflow/10000).toFixed(1)},${(r.netProfit/10000).toFixed(1)},${irrStr}\r\n`;
         });
         csvContent += "--------------------------------------------------\r\n\r\n";
     });
@@ -554,7 +624,8 @@ function exportToCSV() {
     csvContent += "==================================================\r\n";
     csvContent += "累積繳納利息總成本,持有期內付給銀行的純利息總和（不含還本本金）。\r\n";
     csvContent += "持有期內付出總額,期初總現金投入 + 持有期內繳給銀行的房貸總本利和（用於現金流壓力測試）。\r\n";
-    csvContent += "實質淨獲利（總額）,(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即口袋最終純利潤。\r\n";
+    csvContent += "實質淨獲利（總額）,(未來出售總價 - 買入總價) + 累積租金收入 - 租金所得稅 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即口袋最終純利潤。\r\n";
+    csvContent += "租金所得稅,租金收入以43%法定必要費用推計後，併入個人綜所稅邊際稅率課稅（非單獨稅率），已計入淨獲利與IRR現金流。\r\n";
 
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
