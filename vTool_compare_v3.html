@@ -294,9 +294,17 @@
                 </div>
                 
                 <div class="input-group">
-                    <label for="loanPercentagesInput_A">自訂多組貸款成數 (%)</label>
-                    <input type="text" id="loanPercentagesInput_A" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
-                    <div class="help-text">提示：多組貸款成數請用逗號隔開</div>
+                    <label for="loanValuesInput_A" id="loanValuesLabel_A">自訂多組貸款成數 (%)</label>
+                    <input type="text" id="loanValuesInput_A" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
+                    <div class="help-text" id="loanValuesHelp_A">提示：多組貸款成數請用逗號隔開</div>
+                    <div style="display:flex; gap:12px; align-items:center; margin-top:6px; font-size:12px; color:#4a5568;">
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-weight:normal; margin-bottom:0;">
+                            <input type="radio" name="loanInputMode_A" value="percent" checked onchange="onLoanModeChange('A')" style="width:auto;">依成數(%)
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-weight:normal; margin-bottom:0;">
+                            <input type="radio" name="loanInputMode_A" value="amount" onchange="onLoanModeChange('A')" style="width:auto;">依實際金額(萬元)
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="input-grid" style="margin-bottom: 0; gap: 10px;">
@@ -404,9 +412,17 @@
                 </div>
                 
                 <div class="input-group">
-                    <label for="loanPercentagesInput_B">自訂多組貸款成數 (%)</label>
-                    <input type="text" id="loanPercentagesInput_B" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
-                    <div class="help-text">提示：多組貸款成數請用逗號隔開</div>
+                    <label for="loanValuesInput_B" id="loanValuesLabel_B">自訂多組貸款成數 (%)</label>
+                    <input type="text" id="loanValuesInput_B" class="custom-input" value="60, 70, 80" oninput="calculateAll()">
+                    <div class="help-text" id="loanValuesHelp_B">提示：多組貸款成數請用逗號隔開</div>
+                    <div style="display:flex; gap:12px; align-items:center; margin-top:6px; font-size:12px; color:#4a5568;">
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-weight:normal; margin-bottom:0;">
+                            <input type="radio" name="loanInputMode_B" value="percent" checked onchange="onLoanModeChange('B')" style="width:auto;">依成數(%)
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-weight:normal; margin-bottom:0;">
+                            <input type="radio" name="loanInputMode_B" value="amount" onchange="onLoanModeChange('B')" style="width:auto;">依實際金額(萬元)
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="input-grid" style="margin-bottom: 0; gap: 10px;">
@@ -531,6 +547,26 @@
 <script>
 let currentDataState_A = {};
 let currentDataState_B = {};
+let lastLoanMode = { A: 'percent', B: 'percent' };
+
+// 切換「依成數/依實際金額」時，把輸入框裡的數字依當前總價換算成新單位，避免切換後被誤讀成錯誤單位
+function onLoanModeChange(suffix) {
+    const newMode = document.querySelector(`input[name="loanInputMode_${suffix}"]:checked`).value;
+    const oldMode = lastLoanMode[suffix];
+    if (newMode !== oldMode) {
+        const totalPriceMax = parseFloat(document.getElementById(`totalPrice_${suffix}`).value) || 0;
+        const input = document.getElementById(`loanValuesInput_${suffix}`);
+        const currentValues = input.value.split(/[\s,;，；]+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
+        if (currentValues.length > 0 && totalPriceMax > 0) {
+            const converted = newMode === 'amount'
+                ? currentValues.map(v => Math.round(totalPriceMax * (v / 100)))
+                : currentValues.map(v => Math.round((v / totalPriceMax) * 1000) / 10);
+            input.value = converted.join(', ');
+        }
+        lastLoanMode[suffix] = newMode;
+    }
+    calculateAll();
+}
 
 // 以逐月現金流(期初投入 -> 每月租金減房貸還款 -> 賣屋淨變現)解出月報酬率，取代僅看頭尾金額的簡化CAGR
 function solveMonthlyIRR(cashFlows) {
@@ -605,11 +641,20 @@ function calculateCase(suffix) {
     document.getElementById(`infoTotalRent_${suffix}`).innerText = (totalRentIncome / 10000).toFixed(0) + " 萬元";
     document.getElementById(`infoRentTax_${suffix}`).innerText = "-" + (totalRentIncomeTax / 10000).toFixed(1) + " 萬元";
 
-    const loanInputStr = document.getElementById(`loanPercentagesInput_${suffix}`).value;
+    const loanMode = document.querySelector(`input[name="loanInputMode_${suffix}"]:checked`).value; // 'percent' 或 'amount'
+    if (loanMode === 'amount') {
+        document.getElementById(`loanValuesLabel_${suffix}`).innerText = '自訂多組貸款金額 (萬元)';
+        document.getElementById(`loanValuesHelp_${suffix}`).innerText = '提示：多組貸款金額請用逗號隔開';
+    } else {
+        document.getElementById(`loanValuesLabel_${suffix}`).innerText = '自訂多組貸款成數 (%)';
+        document.getElementById(`loanValuesHelp_${suffix}`).innerText = '提示：多組貸款成數請用逗號隔開';
+    }
+
+    const loanInputStr = document.getElementById(`loanValuesInput_${suffix}`).value;
     let loanScenarios = loanInputStr
         .split(/[\s,;，；]+/)
         .map(l => parseFloat(l))
-        .filter(l => !isNaN(l) && l >= 0 && l <= 100);
+        .filter(l => !isNaN(l) && l >= 0 && (loanMode === 'amount' || l <= 100));
 
     const pricesInputStr = document.getElementById(`customPricesInput_${suffix}`).value;
     let priceScenarios = pricesInputStr
@@ -621,7 +666,7 @@ function calculateCase(suffix) {
     matrixBody.innerHTML = '';
     
     if (loanScenarios.length === 0 || priceScenarios.length === 0) {
-        matrixBody.innerHTML = `<tr><td colspan="8" style="color:#aaa; padding: 20px;">請確保已輸入貸款成數與預期售價</td></tr>`;
+        matrixBody.innerHTML = `<tr><td colspan="8" style="color:#aaa; padding: 20px;">請確保已輸入貸款成數/金額與預期售價</td></tr>`;
         return;
     }
     
@@ -659,8 +704,10 @@ function calculateCase(suffix) {
         groups: []
     };
 
-    loanScenarios.forEach(loanPct => {
-        const loanAmount = totalPrice * (loanPct / 100);
+    loanScenarios.forEach(rawLoanValue => {
+        // 依輸入模式解讀：成數(%) 直接算比例；實際金額(萬元) 則換算成貸款額，並反推顯示用百分比，超過總價則以總價封頂
+        const loanAmount = loanMode === 'amount' ? Math.min(rawLoanValue * 10000, totalPrice) : totalPrice * (rawLoanValue / 100);
+        const loanPct = totalPrice > 0 ? (loanAmount / totalPrice) * 100 : 0;
         const selfPrepared = totalPrice - loanAmount;
         const totalInitialCash = selfPrepared + buyExpenses; 
         
@@ -707,13 +754,13 @@ function calculateCase(suffix) {
         
         groupRow.innerHTML = `
             <td colspan="8" class="loan-group-header">
-                貸款成數：${loanPct}% ➔【期初總投入現金：${(totalInitialCash / 10000).toFixed(1)} 萬元 (自備 ${(selfPrepared / 10000).toFixed(0)} 萬 + 雜費 ${(buyExpenses / 10000).toFixed(0)} 萬)】 ｜ ${graceText}
+                貸款金額：${(loanAmount / 10000).toFixed(0)} 萬 (${loanPct.toFixed(1)}%) ➔【期初總投入現金：${(totalInitialCash / 10000).toFixed(1)} 萬元 (自備 ${(selfPrepared / 10000).toFixed(0)} 萬 + 雜費 ${(buyExpenses / 10000).toFixed(0)} 萬)】 ｜ ${graceText}
             </td>
         `;
         matrixBody.appendChild(groupRow);
 
         let groupData = {
-            loanPct, totalInitialCash, selfPrepared, monthlyMortgageGrace, monthlyMortgagePostGrace, totalInterestExpense, totalMortgagePaidInHolding, rows: []
+            loanPct, loanAmount, totalInitialCash, selfPrepared, monthlyMortgageGrace, monthlyMortgagePostGrace, totalInterestExpense, totalMortgagePaidInHolding, rows: []
         };
 
         priceScenarios.forEach(targetPricePerPing => {
@@ -832,7 +879,7 @@ function exportToCSV() {
     csvContent += " 案件 A：未來售價與貸款成數交叉分析大表\r\n";
     csvContent += "==================================================\r\n\r\n";
     currentDataState_A.groups.forEach(g => {
-        csvContent += `[貸款成數設定: ${g.loanPct}%]\r\n`;
+        csvContent += `[貸款設定: ${(g.loanAmount/10000).toFixed(0)} 萬 (${g.loanPct.toFixed(1)}%)]\r\n`;
         csvContent += `--> 期初總投入現金: ${(g.totalInitialCash/10000).toFixed(1)} 萬元 (自備款: ${(g.selfPrepared/10000).toFixed(0)} 萬 / 買入費用: ${(dA.buyExpenses/10000).toFixed(0)} 萬)\r\n`;
         csvContent += `--> 房貸月付金額度: 寬限期內約 ${Math.round(g.monthlyMortgageGrace)} 元 / 寬限期後約 ${Math.round(g.monthlyMortgagePostGrace)} 元\r\n`;
         csvContent += "--------------------------------------------------\r\n";
@@ -849,7 +896,7 @@ function exportToCSV() {
     csvContent += " 案件 B：未來售價與貸款成數交叉分析大表\r\n";
     csvContent += "==================================================\r\n\r\n";
     currentDataState_B.groups.forEach(g => {
-        csvContent += `[貸款成數設定: ${g.loanPct}%]\r\n`;
+        csvContent += `[貸款設定: ${(g.loanAmount/10000).toFixed(0)} 萬 (${g.loanPct.toFixed(1)}%)]\r\n`;
         csvContent += `--> 期初總投入現金: ${(g.totalInitialCash/10000).toFixed(1)} 萬元 (自備款: ${(g.selfPrepared/10000).toFixed(0)} 萬 / 買入費用: ${(dB.buyExpenses/10000).toFixed(0)} 萬)\r\n`;
         csvContent += `--> 房貸月付金額度: 寬限期內約 ${Math.round(g.monthlyMortgageGrace)} 元 / 寬限期後約 ${Math.round(g.monthlyMortgagePostGrace)} 元\r\n`;
         csvContent += "--------------------------------------------------\r\n";
