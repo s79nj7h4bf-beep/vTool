@@ -314,8 +314,21 @@
                     <label for="monthlyRent_A">預期月租金 (元)</label>
                     <input type="number" id="monthlyRent_A" value="35000" oninput="calculateAll()">
                 </div>
+
+                <div class="input-group full-width">
+                    <label for="rentalTaxRate_A">租金所得 個人綜所稅邊際稅率 (%)</label>
+                    <select id="rentalTaxRate_A" onchange="calculateAll()">
+                        <option value="0">0% (不併入計算)</option>
+                        <option value="5">5%</option>
+                        <option value="12" selected>12%</option>
+                        <option value="20">20%</option>
+                        <option value="30">30%</option>
+                        <option value="40">40%</option>
+                    </select>
+                    <div class="help-text">租金收入以43%法定必要費用推計後，併入你的綜所稅邊際稅率課稅</div>
+                </div>
             </div>
-            
+
             <div class="result-box">
                 <div class="result-item">
                     <span>買入每坪單價：</span>
@@ -328,7 +341,7 @@
             </div>
 
             <div class="section-title">2. 設定持有年期與未來售價/成數交叉試算 (A)</div>
-            
+
             <div class="holding-box">
                 <div class="input-grid" style="margin-bottom: 0;">
                     <div class="input-group">
@@ -343,7 +356,8 @@
                     </div>
                 </div>
                 <div style="margin-top: 5px; font-size: 13px; color: #718096; border-top: 1px dotted #e2e8f0; padding-top: 8px;">
-                    * 期間累積租金總收入：<span id="infoTotalRent_A" style="color:#2f855a; font-weight:600;">--</span>
+                    * 期間累積租金總收入(稅前)：<span id="infoTotalRent_A" style="color:#2f855a; font-weight:600;">--</span>
+                    ｜ 預估租金所得稅：<span id="infoRentTax_A" style="color:#c53030; font-weight:600;">--</span>
                 </div>
             </div>
 
@@ -410,8 +424,21 @@
                     <label for="monthlyRent_B">預期月租金 (元)</label>
                     <input type="number" id="monthlyRent_B" value="35000" oninput="calculateAll()">
                 </div>
+
+                <div class="input-group full-width">
+                    <label for="rentalTaxRate_B">租金所得 個人綜所稅邊際稅率 (%)</label>
+                    <select id="rentalTaxRate_B" onchange="calculateAll()">
+                        <option value="0">0% (不併入計算)</option>
+                        <option value="5">5%</option>
+                        <option value="12" selected>12%</option>
+                        <option value="20">20%</option>
+                        <option value="30">30%</option>
+                        <option value="40">40%</option>
+                    </select>
+                    <div class="help-text">租金收入以43%法定必要費用推計後，併入你的綜所稅邊際稅率課稅</div>
+                </div>
             </div>
-            
+
             <div class="result-box">
                 <div class="result-item">
                     <span>買入每坪單價：</span>
@@ -424,7 +451,7 @@
             </div>
 
             <div class="section-title">2. 設定持有年期與未來售價/成數交叉試算 (B)</div>
-            
+
             <div class="holding-box">
                 <div class="input-grid" style="margin-bottom: 0;">
                     <div class="input-group">
@@ -439,7 +466,8 @@
                     </div>
                 </div>
                 <div style="margin-top: 5px; font-size: 13px; color: #718096; border-top: 1px dotted #e2e8f0; padding-top: 8px;">
-                    * 期間累積租金總收入：<span id="infoTotalRent_B" style="color:#2f855a; font-weight:600;">--</span>
+                    * 期間累積租金總收入(稅前)：<span id="infoTotalRent_B" style="color:#2f855a; font-weight:600;">--</span>
+                    ｜ 預估租金所得稅：<span id="infoRentTax_B" style="color:#c53030; font-weight:600;">--</span>
                 </div>
             </div>
 
@@ -490,9 +518,10 @@
 
         <div class="def-item">
             <div class="def-title" style="color: #2b6cb0;">• 實質淨獲利（總額） (最終實拿戰果)</div>
-            <div class="def-formula">公式：(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅</div>
+            <div class="def-formula">公式：(未來出售總價 - 買入總價) + 累積租金收入 - 租金所得稅 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅</div>
             <div class="def-desc">
                 代表<b>把房子賣掉、清償銀行賸餘貸款、並繳清所有稅費與仲介費後，扣除最初拿出的期初總現金，留在你口袋裡的「純利潤」</b>。此指標已將持有期間的租金收入與利息支出等全面大清算，最貼近真實投資效益。
+                <br><span style="color:#718096;">*租金所得稅：以租金收入 43% 法定必要費用推計後，併入你設定的個人綜所稅邊際稅率課稅，非單獨稅率。</span>
             </div>
         </div>
     </div>
@@ -548,18 +577,25 @@ function calculateCase(suffix) {
     const pingCount = parseFloat(document.getElementById(`pingCount_${suffix}`).value) || 0;
     const interestRate = parseFloat(document.getElementById(`interestRate_${suffix}`).value) || 0;
     const monthlyRent = parseFloat(document.getElementById(`monthlyRent_${suffix}`).value) || 0;
-    
+    const rentalMarginalRate = (parseFloat(document.getElementById(`rentalTaxRate_${suffix}`).value) || 0) / 100;
+
     const holdingYears = parseInt(document.getElementById(`holdingYears_${suffix}`).value) || 1;
     const loanYears = parseInt(document.getElementById(`loanYearsInput_${suffix}`).value) || 30;
     const graceYears = parseFloat(document.getElementById(`graceYearsInput_${suffix}`).value) || 0;
-    
-    const totalPrice = totalPriceMax * 10000; 
-    const buyExpenses = totalPrice * 0.02; 
+
+    const totalPrice = totalPriceMax * 10000;
+    const buyExpenses = totalPrice * 0.02;
     const buyPricePerPing = pingCount > 0 ? (totalPriceMax / pingCount) : 0;
     const yearlyRent = monthlyRent * 12;
     const totalRentIncome = yearlyRent * holdingYears;
     const monthlyInterestRate = (interestRate / 100) / 12;
-    
+
+    // 租金所得稅：以43%法定必要費用推計後，併入個人綜所稅邊際稅率課稅
+    const RENTAL_EXPENSE_RATIO = 0.43;
+    const yearlyRentTax = yearlyRent * (1 - RENTAL_EXPENSE_RATIO) * rentalMarginalRate;
+    const totalRentIncomeTax = yearlyRentTax * holdingYears;
+    const monthlyRentTax = yearlyRentTax / 12;
+
     const totalMonths = loanYears * 12; // 依自訂房貸年期動態建立總期數
     const graceMonths = graceYears * 12;
     const remainingMonths = totalMonths - graceMonths; // 精準扣除寬限期之賸餘攤還期數
@@ -567,6 +603,7 @@ function calculateCase(suffix) {
     document.getElementById(`pricePerPing_${suffix}`).innerText = buyPricePerPing.toFixed(1) + " 萬元/坪";
     document.getElementById(`buyExpenses_${suffix}`).innerText = (buyExpenses / 10000).toFixed(1) + " 萬元";
     document.getElementById(`infoTotalRent_${suffix}`).innerText = (totalRentIncome / 10000).toFixed(0) + " 萬元";
+    document.getElementById(`infoRentTax_${suffix}`).innerText = "-" + (totalRentIncomeTax / 10000).toFixed(1) + " 萬元";
 
     const loanInputStr = document.getElementById(`loanPercentagesInput_${suffix}`).value;
     let loanScenarios = loanInputStr
@@ -616,7 +653,7 @@ function calculateCase(suffix) {
     loanScenarios.sort((a, b) => a - b);
 
     let stateObj = {
-        inputs: { totalPriceMax, pingCount, interestRate, graceYears, loanYears, monthlyRent, holdingYears, buyPricePerPing, buyExpenses, totalRentIncome },
+        inputs: { totalPriceMax, pingCount, interestRate, graceYears, loanYears, monthlyRent, holdingYears, buyPricePerPing, buyExpenses, totalRentIncome, rentalMarginalRate, totalRentIncomeTax },
         taxRate: taxRate,
         isSelfUseTaxFree: isSelfUseTaxFree,
         groups: []
@@ -663,7 +700,7 @@ function calculateCase(suffix) {
             }
         }
         const remainingLoanAtEnd = Math.max(0, remainingLoan); // 持有期滿時尚未還清的貸款餘額，賣屋時須先清償
-        const monthlyNetFlowBase = monthlyPaymentSchedule.map(payment => monthlyRent - payment); // 每月(租金收入 - 房貸還款)的淨現金流
+        const monthlyNetFlowBase = monthlyPaymentSchedule.map(payment => monthlyRent - monthlyRentTax - payment); // 每月(稅後租金收入 - 房貸還款)的淨現金流
 
         const groupRow = document.createElement('tr');
         const graceText = graceYears > 0 ? `寬限期內月付:約${Math.round(monthlyMortgageGrace).toLocaleString()}元 / 第${graceYears+1}年起月付:約${Math.round(monthlyMortgagePostGrace).toLocaleString()}元` : `無寬限期月付:約${Math.round(monthlyMortgagePostGrace).toLocaleString()}元`;
@@ -698,7 +735,7 @@ function calculateCase(suffix) {
             }
             
             const propertyAppreciation = estimatedTotalPrice - totalPrice;
-            const netProfit = propertyAppreciation + totalRentIncome - totalInterestExpense - buyExpenses - sellExpenses - capitalGainTax;
+            const netProfit = propertyAppreciation + totalRentIncome - totalRentIncomeTax - totalInterestExpense - buyExpenses - sellExpenses - capitalGainTax;
             
             const totalOutflow = totalInitialCash + totalMortgagePaidInHolding;
             
@@ -764,7 +801,9 @@ function exportToCSV() {
     
     const taxRateStr_A = currentDataState_A.isSelfUseTaxFree ? "10% (自住滿6年優惠，400萬免稅)" : (currentDataState_A.taxRate*100) + "%";
     csvContent += `房地合一稅率,${taxRateStr_A},\r\n`;
-    csvContent += `累積租金總收入,${(dA.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `累積租金總收入(稅前),${(dA.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `租金所得個人邊際稅率,${dA.rentalMarginalRate*100},%\r\n`;
+    csvContent += `預估租金所得稅總額,${(dA.totalRentIncomeTax/10000).toFixed(1)},萬元\r\n`;
     csvContent += `買入期初費用(2%),${(dA.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
 
     // --- 案件 B 初始參數 ---
@@ -783,7 +822,9 @@ function exportToCSV() {
     
     const taxRateStr_B = currentDataState_B.isSelfUseTaxFree ? "10% (自住滿6年優惠，400萬免稅)" : (currentDataState_B.taxRate*100) + "%";
     csvContent += `房地合一稅率,${taxRateStr_B},\r\n`;
-    csvContent += `累積租金總收入,${(dB.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `累積租金總收入(稅前),${(dB.totalRentIncome/10000).toFixed(1)},萬元\r\n`;
+    csvContent += `租金所得個人邊際稅率,${dB.rentalMarginalRate*100},%\r\n`;
+    csvContent += `預估租金所得稅總額,${(dB.totalRentIncomeTax/10000).toFixed(1)},萬元\r\n`;
     csvContent += `買入期初費用(2%),${(dB.buyExpenses/10000).toFixed(1)},萬元\r\n\r\n`;
     
     // --- 案件 A 交叉分析 ---
@@ -826,7 +867,8 @@ function exportToCSV() {
     csvContent += "==================================================\r\n";
     csvContent += "累積繳納利息總成本,持有期內付給銀行的純利息總和（不含還本本金）。\r\n";
     csvContent += "持有期內付出總額,期初總現金投入 + 持有期內繳給銀行的房貸總本利和（用於現金流壓力測試）。\r\n";
-    csvContent += "實質淨獲利（總額）,(未來出售總價 - 買入總價) + 累積租金收入 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即口袋最終純利潤。\r\n";
+    csvContent += "實質淨獲利（總額）,(未來出售總價 - 買入總價) + 累積租金收入 - 租金所得稅 - 累積利息成本 - 買入費用(2%) - 賣出費用(4%) - 房地合一稅。即口袋最終純利潤。\r\n";
+    csvContent += "租金所得稅,租金收入以43%法定必要費用推計後，併入個人綜所稅邊際稅率課稅（非單獨稅率），已計入淨獲利與IRR現金流。\r\n";
 
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
